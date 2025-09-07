@@ -1,4 +1,7 @@
 # Packages listed in alphabetical order
+numpy
+opencv-python
+panda3d
 pytest
 
 # Linters and formatters are explicitly versioned
