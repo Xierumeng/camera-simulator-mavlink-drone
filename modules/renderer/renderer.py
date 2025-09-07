@@ -19,18 +19,51 @@ class ModelLoadData:
     Model metadata for renderer.
     """
 
+    class Scale:
+        """
+        Scaling of the model.
+        """
+
+        def __init__(self, x: float, y: float, z: float) -> None:
+            """
+            x, y, z: Scaling of the model.
+            """
+            self.x = x
+            self.y = y
+            self.z = z
+
+    class Position:
+        """
+        Position of the model.
+        """
+
+        def __init__(self, x: float, y: float, z: float) -> None:
+            """
+            x, y, z: Position of the model.
+            """
+            self.x = x
+            self.y = y
+            self.z = z
+
+    class Rotation:
+        """
+        Rotation of the model.
+        """
+
+        def __init__(self, h: float, p: float, r: float) -> None:
+            """
+            h, p, r: Rotation of the model. h is yaw but letter y is already used.
+            """
+            self.h = h
+            self.p = p
+            self.r = r
+
     def __init__(
         self,
         model_path: pathlib.Path,
-        scale_x: float,
-        scale_y: float,
-        scale_z: float,
-        position_x: float,
-        position_y: float,
-        position_z: float,
-        rotation_h: float,
-        rotation_p: float,
-        rotation_r: float,
+        scale: Scale,
+        position: Position,
+        rotation: Rotation,
     ) -> None:
         """
         model_path: File path to model.
@@ -40,17 +73,9 @@ class ModelLoadData:
         """
         self.model_path = model_path
 
-        self.scale_x = scale_x
-        self.scale_y = scale_y
-        self.scale_z = scale_z
-
-        self.position_x = position_x
-        self.position_y = position_y
-        self.position_z = position_z
-
-        self.rotation_h = rotation_h
-        self.rotation_p = rotation_p
-        self.rotation_r = rotation_r
+        self.scale = scale
+        self.position = position
+        self.rotation = rotation
 
 
 class Renderer(ShowBase.ShowBase):
@@ -114,15 +139,15 @@ class Renderer(ShowBase.ShowBase):
         # Reparent the model to render
         self.scene.reparentTo(self.render)
 
-        # Apply scale and position transforms on the model
+        # Apply transforms on the model
         self.scene.setScale(
-            model_load_data.scale_x, model_load_data.scale_y, model_load_data.scale_z
+            model_load_data.scale.x, model_load_data.scale.y, model_load_data.scale.z
         )
         self.scene.setPos(
-            model_load_data.position_x, model_load_data.position_y, model_load_data.position_z
+            model_load_data.position.x, model_load_data.position.y, model_load_data.position.z
         )
         self.scene.setHpr(
-            model_load_data.rotation_h, model_load_data.rotation_p, model_load_data.rotation_r
+            model_load_data.rotation.h, model_load_data.rotation.p, model_load_data.rotation.r
         )
 
     def set_camera_position_and_orientation(self, task: object) -> int:
