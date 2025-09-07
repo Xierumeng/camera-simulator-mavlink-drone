@@ -3,6 +3,7 @@ Renders the scene.
 """
 
 import math
+import pathlib
 
 # Panda3D
 from direct.showbase import ShowBase
@@ -13,27 +14,75 @@ import cv2
 import numpy as np
 
 
+class ModelLoadData:
+    """
+    Model metadata for renderer.
+    """
+
+    def __init__(
+        self,
+        model_path: pathlib.Path,
+        scale_x: float,
+        scale_y: float,
+        scale_z: float,
+        position_x: float,
+        position_y: float,
+        position_z: float,
+        rotation_h: float,
+        rotation_p: float,
+        rotation_r: float,
+    ) -> None:
+        """
+        model_path: File path to model.
+        scale: Scaling of the model.
+        position: Position of the model.
+        rotation: Rotation of the model.
+        """
+        self.model_path = model_path
+
+        self.scale_x = scale_x
+        self.scale_y = scale_y
+        self.scale_z = scale_z
+
+        self.position_x = position_x
+        self.position_y = position_y
+        self.position_z = position_z
+
+        self.rotation_h = rotation_h
+        self.rotation_p = rotation_p
+        self.rotation_r = rotation_r
+
+
 class Renderer(ShowBase.ShowBase):
     """
     Wrapper for the application that renders the scene.
     """
 
-    def __init__(self) -> None:
+    __create_key = object()
+
+    @classmethod
+    def create(
+        cls,
+        model_load_data: ModelLoadData,
+    ) -> "tuple[True, Renderer] | tuple[False, None]":
         """
-        Constructor.
+        model_load_data: Model metadata for renderer.
+
+        Return: Success, object.
         """
+        return True, Renderer(cls.__create_key, model_load_data)
+
+    def __init__(self, class_private_create_key: object, model_load_data: ModelLoadData) -> None:
+        """
+        Private constructor, use create() method.
+        """
+        assert class_private_create_key is Renderer.__create_key, "Use create() method"
+
         ShowBase.ShowBase.__init__(self)
 
-        # Load the environment model
-        assert self.loader is not None
-        self.scene = self.loader.loadModel("models/environment")
+        self.setBackgroundColor(0, 0, 0)
 
-        # Reparent the model to render
-        self.scene.reparentTo(self.render)
-
-        # Apply scale and position transforms on the model
-        self.scene.setScale(0.25, 0.25, 0.25)
-        self.scene.setPos(-8, 42, 0)
+        self.__load_model(model_load_data)
 
         # For output images
         self.texture = core.Texture()
@@ -41,11 +90,40 @@ class Renderer(ShowBase.ShowBase):
             self.texture, core.GraphicsOutput.RTMCopyRam, core.GraphicsOutput.RTPColor
         )
 
+        # Tasks running continuously
         self.taskMgr.add(
             self.set_camera_position_and_orientation,
             "set_camera_position_and_orientation",
         )
         self.taskMgr.add(self.display_image, "display_image")
+
+    def __load_model(self, model_load_data: ModelLoadData) -> None:
+        """
+        Load the model.
+
+        model_load_data: Model metadata for renderer.
+
+        Return: None.
+        """
+        model_path = core.Filename.fromOsSpecific(str(model_load_data.model_path))
+
+        # Load the environment model
+        assert self.loader is not None
+        self.scene = self.loader.loadModel(model_path)
+
+        # Reparent the model to render
+        self.scene.reparentTo(self.render)
+
+        # Apply scale and position transforms on the model
+        self.scene.setScale(
+            model_load_data.scale_x, model_load_data.scale_y, model_load_data.scale_z
+        )
+        self.scene.setPos(
+            model_load_data.position_x, model_load_data.position_y, model_load_data.position_z
+        )
+        self.scene.setHpr(
+            model_load_data.rotation_h, model_load_data.rotation_p, model_load_data.rotation_r
+        )
 
     def set_camera_position_and_orientation(self, task: object) -> int:
         """
