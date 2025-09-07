@@ -32,6 +32,19 @@ class ModelLoadData:
             self.y = y
             self.z = z
 
+    class Rotation:
+        """
+        Rotation of the model in degrees.
+        """
+
+        def __init__(self, h: float, p: float, r: float) -> None:
+            """
+            h, p, r: Rotation of the model. h is yaw but letter y is already used.
+            """
+            self.h = h
+            self.p = p
+            self.r = r
+
     class Position:
         """
         Position of the model.
@@ -45,37 +58,24 @@ class ModelLoadData:
             self.y = y
             self.z = z
 
-    class Rotation:
-        """
-        Rotation of the model.
-        """
-
-        def __init__(self, h: float, p: float, r: float) -> None:
-            """
-            h, p, r: Rotation of the model. h is yaw but letter y is already used.
-            """
-            self.h = h
-            self.p = p
-            self.r = r
-
     def __init__(
         self,
         model_path: pathlib.Path,
         scale: Scale,
-        position: Position,
         rotation: Rotation,
+        position: Position,
     ) -> None:
         """
         model_path: File path to model.
         scale: Scaling of the model.
-        position: Position of the model.
         rotation: Rotation of the model.
+        position: Position of the model.
         """
         self.model_path = model_path
 
         self.scale = scale
-        self.position = position
         self.rotation = rotation
+        self.position = position
 
 
 class Renderer(ShowBase.ShowBase):
@@ -143,11 +143,11 @@ class Renderer(ShowBase.ShowBase):
         self.scene.setScale(
             model_load_data.scale.x, model_load_data.scale.y, model_load_data.scale.z
         )
-        self.scene.setPos(
-            model_load_data.position.x, model_load_data.position.y, model_load_data.position.z
-        )
         self.scene.setHpr(
             model_load_data.rotation.h, model_load_data.rotation.p, model_load_data.rotation.r
+        )
+        self.scene.setPos(
+            model_load_data.position.x, model_load_data.position.y, model_load_data.position.z
         )
 
     def set_camera_position_and_orientation(self, task: object) -> int:
@@ -156,11 +156,17 @@ class Renderer(ShowBase.ShowBase):
 
         task: Task metadata for renderer.
         """
+        # Rotation transforms to Panda3D from NED
+        # Pitch also requires a negative multiplication
+        h_offset = math.degrees(-math.pi / 2)
+        p_offset = math.degrees(0)
+        r_offset = math.degrees(math.pi)
+
         angle_degrees = task.time * 6.0
         angle_radians = math.radians(angle_degrees)
 
-        self.camera.setPos(20 * math.sin(angle_radians), -20 * math.cos(angle_radians), 3)
-        self.camera.setHpr(angle_degrees, 0, 0)
+        self.camera.setPos(2 * math.sin(angle_radians), 2 * math.cos(angle_radians), -3)
+        self.camera.setHpr(h_offset + angle_degrees, p_offset, r_offset)
 
         return Task.cont
 
